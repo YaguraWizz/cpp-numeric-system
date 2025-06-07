@@ -1,0 +1,168 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - README.md
+  pull_request:
+
+jobs:
+  build-test-plot:
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        compiler: [gcc, clang, msvc]
+        exclude:
+          - os: ubuntu-latest
+            compiler: msvc
+          - os: windows-latest
+            compiler: gcc
+          - os: windows-latest
+            compiler: clang
+    runs-on: ${{ matrix.os }}
+
+    env:
+      DGENERATE_TESTS: "ON"
+      DGENERATE_BENCHMARK: "ON"
+
+    steps:
+      - name: Checkout repository with submodules
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Setup Python 3.x
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Python dependencies
+        run: |
+          cd tools/impl
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+        shell: bash
+
+      - name: Setup compiler (Ubuntu + GCC)
+        if: matrix.os == 'ubuntu-latest' && matrix.compiler == 'gcc'
+        run: 
+          sudo apt-get update
+          sudo apt-get install -y gcc
+
+      - name: Setup compiler (Ubuntu + Clang)
+        if: matrix.os == 'ubuntu-latest' && matrix.compiler == 'clang'
+        run: 
+          sudo apt-get update
+          sudo apt-get install -y clang
+
+      - name: Setup compiler (Windows + MSVC)
+        if: matrix.os == 'windows-latest' && matrix.compiler == 'msvc'
+        uses: microsoft/setup-msbuild@v1
+
+      - name: Configure CMake
+        run: |
+          mkdir -p .project
+          cd .project
+          if ! cmake -DGENERATE_TESTS=$DGENERATE_TESTS -DGENERATE_BENCHMARK=$DGENERATE_BENCHMARK .. ; then
+            echo "Error: CMake configure failed"
+            exit 1
+          fi
+        shell: bash
+
+      - name: Build project
+        run: |
+          cd .project
+          if ! cmake --build . --config Release; then
+            echo "Error: Build failed"
+            exit 1
+          fi
+        shell: bash
+
+      - name: Run tests
+        run: |
+          cd .project
+          if ! ctest -C Release --output-on-failure --output-junit rtest-junit.xml ; then
+            echo "Error: Tests failed"
+            # Можно вывести логи тестов, если есть
+            if [ -f Testing/Temporary/LastTest.log ]; then
+              echo "LastTest.log:"
+              cat Testing/Temporary/LastTest.log
+            fi
+            exit 1
+          fi
+        shell: bash
+
+      - name: Generate benchmark charts
+        run: |
+          cd tools/impl
+          if ! python plot-benchmarks.py --input ../../.project/rbenchmark.json --output ../../docs/charts ; then
+            echo "Error: Benchmark plotting failed"
+            exit 1
+          fi
+        shell: bash
+
+      - name: Upload test results and benchmark charts artifacts
+        continue-on-error: true
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts-${{ matrix.os }}-${{ matrix.compiler }}
+          path: |
+            .project/rtest-junit.xml
+            .project/rbenchmark.json
+            docs/charts/chart_*.png
+
+  update-readme:
+    needs: build-test-plot
+    runs-on: ubuntu-latest
+    if: ${{ github.actor == github.repository_owner && github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, '[skip ci]') }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Download artifact ubuntu-latest gcc
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifacts-ubuntu-latest-gcc
+          path: downloaded_artifacts/ubuntu-latest-gcc
+        continue-on-error: true
+
+      - name: Download artifact ubuntu-latest clang
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifacts-ubuntu-latest-clang
+          path: downloaded_artifacts/ubuntu-latest-clang
+        continue-on-error: true
+
+      - name: Download artifact windows-latest msvc
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifacts-windows-latest-msvc
+          path: downloaded_artifacts/windows-latest-msvc
+        continue-on-error: true
+
+      - name: Generate README
+        working-directory: tools/.impl-readme-ci-generation
+        run: python generation-readme.py --input-folder ../../downloaded_artifacts --output-readme ../../README.md --template-path .
+        shell: bash
+
+      - name: Commit and push README if updated
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add README.md
+
+          if git diff --cached --quiet; then
+            echo "README.md not changed"
+          else
+            git commit -m "Update README with build status [skip ci]"
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
+          fi
+        shell: bash
