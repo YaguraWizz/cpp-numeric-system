@@ -190,7 +190,7 @@ namespace numsystem {
         if (is_zero()) return BinaryArithmetic(0);
 
         using value_type = BinaryArithmetic::value_type;
-        constexpr size_t BITS = Storage<value_type>::VALUE_COUNT_BIT;
+        constexpr size_t BITS = impl::Storage<value_type>::VALUE_COUNT_BIT;
 
         BinaryArithmetic lhs_abs = abs(*this);
         BinaryArithmetic rhs_abs = abs(other);
