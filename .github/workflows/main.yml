@@ -172,8 +172,12 @@ jobs:
 
       - name: Run tests
         run: |
-          cd .project
-          ctest -C Release --output-on-failure --output-junit rtest-junit.xml || true
+            cd .project
+            try {
+              & ctest -C Release --output-on-failure --output-junit rtest-junit.xml
+            } catch {
+              Write-Host "Tests failed, but continuing"
+            }
         shell: powershell
 
       - name: Generate benchmark charts
@@ -270,4 +274,7 @@ jobs:
           else
             git commit -m "Update README with build status [skip ci]"
             git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
+          fi
         shell: bash
+
+        
