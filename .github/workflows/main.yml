@@ -8,14 +8,19 @@ on:
       - README.md
   pull_request:
 
+env:
+  DGENERATE_TESTS: "ON"
+  DGENERATE_BENCHMARK: "ON"
+  PROJECT_DIR: .project
+  CHARTS_DIR: docs/charts
+  BENCHMARK_JSON: .project/rbenchmark.json
+  JUNIT_XML: .project/rtest-junit.xml
+
 jobs:
   build-ubuntu-gcc:
     if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
     runs-on: ubuntu-latest
     continue-on-error: true
-    env:
-      DGENERATE_TESTS: "ON"
-      DGENERATE_BENCHMARK: "ON"
     steps:
       - name: Checkout repository with submodules
         uses: actions/checkout@v3
@@ -40,42 +45,40 @@ jobs:
 
       - name: Configure CMake
         run: |
-          mkdir -p .project
-          cd .project
+          mkdir -p $PROJECT_DIR
+          cd $PROJECT_DIR
           cmake -DGENERATE_TESTS=$DGENERATE_TESTS -DGENERATE_BENCHMARK=$DGENERATE_BENCHMARK ..
 
       - name: Build project
         run: |
-          cd .project
+          cd $PROJECT_DIR
           cmake --build . --config Release
 
       - name: Run tests
         run: |
-          cd .project
-          ctest -C Release --output-on-failure --output-junit rtest-junit.xml || true
+          cd $PROJECT_DIR
+          ctest -C Release --output-on-failure --output-junit $JUNIT_XML || true
 
       - name: Generate benchmark charts
         run: |
           cd tools/impl
-          python plot-benchmarks.py --input ../../.project/rbenchmark.json --output ../../docs/charts || true
+          python plot-benchmarks.py --input ../../$BENCHMARK_JSON --output ../../$CHARTS_DIR || true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-ubuntu-latest-gcc
           path: |
-            .project/rtest-junit.xml
-            .project/rbenchmark.json
-            docs/charts/chart_*.png
+            ${{ env.JUNIT_XML }}
+            ${{ env.BENCHMARK_JSON }}
+            ${{ env.CHARTS_DIR }}/chart_*.png
         continue-on-error: true
+
 
   build-ubuntu-clang:
     if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
     runs-on: ubuntu-latest
     continue-on-error: true
-    env:
-      DGENERATE_TESTS: "ON"
-      DGENERATE_BENCHMARK: "ON"
     steps:
       - name: Checkout repository with submodules
         uses: actions/checkout@v3
@@ -100,42 +103,39 @@ jobs:
 
       - name: Configure CMake
         run: |
-          mkdir -p .project
-          cd .project
+          mkdir -p $PROJECT_DIR
+          cd $PROJECT_DIR
           cmake -DGENERATE_TESTS=$DGENERATE_TESTS -DGENERATE_BENCHMARK=$DGENERATE_BENCHMARK -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ ..
 
       - name: Build project
         run: |
-          cd .project
+          cd $PROJECT_DIR
           cmake --build . --config Release
 
       - name: Run tests
         run: |
-          cd .project
-          ctest -C Release --output-on-failure --output-junit rtest-junit.xml || true
+          cd $PROJECT_DIR
+          ctest -C Release --output-on-failure --output-junit $JUNIT_XML || true
 
       - name: Generate benchmark charts
         run: |
           cd tools/impl
-          python plot-benchmarks.py --input ../../.project/rbenchmark.json --output ../../docs/charts || true
+          python plot-benchmarks.py --input ../../$BENCHMARK_JSON --output ../../$CHARTS_DIR || true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-ubuntu-latest-clang
           path: |
-            .project/rtest-junit.xml
-            .project/rbenchmark.json
-            docs/charts/chart_*.png
+            ${{ env.JUNIT_XML }}
+            ${{ env.BENCHMARK_JSON }}
+            ${{ env.CHARTS_DIR }}/chart_*.png
         continue-on-error: true
 
   build-windows-msvc:
     if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
     runs-on: windows-latest
     continue-on-error: true
-    env:
-      DGENERATE_TESTS: "ON"
-      DGENERATE_BENCHMARK: "ON"
     steps:
       - name: Checkout repository with submodules
         uses: actions/checkout@v3
@@ -159,32 +159,32 @@ jobs:
 
       - name: Configure CMake
         run: |
-          mkdir -p .project
-          cd .project
+          mkdir -p $Env:PROJECT_DIR
+          cd $Env:PROJECT_DIR
           cmake -DGENERATE_TESTS=$Env:DGENERATE_TESTS -DGENERATE_BENCHMARK=$Env:DGENERATE_BENCHMARK ..
         shell: powershell
 
       - name: Build project
         run: |
-          cd .project
+          cd $Env:PROJECT_DIR
           cmake --build . --config Release
         shell: powershell
 
       - name: Run tests
         run: |
-            cd .project
-            try {
-              & ctest -C Release --output-on-failure --output-junit rtest-junit.xml
-            } catch {
-              Write-Host "Tests failed, but continuing"
-            }
+          cd $Env:PROJECT_DIR
+          try {
+            & ctest -C Release --output-on-failure --output-junit $Env:JUNIT_XML
+          } catch {
+            Write-Host "Tests failed, but continuing"
+          }
         shell: powershell
 
       - name: Generate benchmark charts
         run: |
           cd tools/impl
           try {
-            python plot-benchmarks.py --input ../../.project/rbenchmark.json --output ../../docs/charts
+            python plot-benchmarks.py --input ../../$Env:BENCHMARK_JSON --output ../../$Env:CHARTS_DIR
           } catch {
             Write-Host "Chart generation failed, but continuing"
           }
@@ -195,10 +195,11 @@ jobs:
         with:
           name: build-artifacts-windows-latest-msvc
           path: |
-            .project/rtest-junit.xml
-            .project/rbenchmark.json
-            docs/charts/chart_*.png
+            ${{ env.JUNIT_XML }}
+            ${{ env.BENCHMARK_JSON }}
+            ${{ env.CHARTS_DIR }}/chart_*.png
         continue-on-error: true
+
 
   update-readme:
     needs: [build-ubuntu-gcc, build-ubuntu-clang, build-windows-msvc]
@@ -233,40 +234,31 @@ jobs:
           name: build-artifacts-windows-latest-msvc
           path: downloaded_artifacts/windows-latest-msvc
         continue-on-error: true
+      
+      - name: Publish test reports (GCC)
+        if: ${{ always() }}
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: downloaded_artifacts/ubuntu-latest-gcc/.project/rtest-junit.xml
+        continue-on-error: true
+
+      - name: Publish test reports (Clang)
+        if: ${{ always() }}
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: downloaded_artifacts/ubuntu-latest-clang/.project/rtest-junit.xml
+        continue-on-error: true
+
+      - name: Publish test reports (MSVC)
+        if: ${{ always() }}
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: downloaded_artifacts/windows-latest-msvc/.project/rtest-junit.xml
+        continue-on-error: true
 
       - name: Generate README
         working-directory: tools/.impl-readme-ci-generation
         run: python generation-readme.py --input-folder ../../downloaded_artifacts --output-readme ../../README.md --template-path .
-
-      - name: Find existing junit files
-        id: find-junit
-        run: |
-          paths=(
-            downloaded_artifacts/ubuntu-latest-gcc/.project/rtest-junit.xml
-            downloaded_artifacts/ubuntu-latest-clang/.project/rtest-junit.xml
-            downloaded_artifacts/windows-latest-msvc/.project/rtest-junit.xml
-          )
-
-          existing_files=()
-          for path in "${paths[@]}"; do
-            if [ -f "$path" ]; then
-              existing_files+=("$path")
-            fi
-          done
-
-          if [ ${#existing_files[@]} -eq 0 ]; then
-            echo "files=" >> $GITHUB_OUTPUT
-          else
-            echo "files=${existing_files[*]}" >> $GITHUB_OUTPUT
-          fi
-        shell: bash
-
-      - name: Publish test reports
-        if: steps.find-junit.outputs.files != ''
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        with:
-          files: ${{ steps.find-junit.outputs.files }}
-        continue-on-error: true
 
       - name: Commit and push README if updated
         run: |

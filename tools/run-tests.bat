@@ -6,7 +6,7 @@ REM Объявление переменных и опций в начале
 REM ============================
 for %%I in ("%~dp0..\") do set "ROOT=%%~fI"
 set "BUILD_DIR=.project"
-set "GENERATE_DOC=OFF"
+set "GENERATE_DOC=ON"
 set "GENERATE_TESTS=ON"
 set "GENERATE_BENCHMARK=ON"
 set "CONFIGURATION=Debug"

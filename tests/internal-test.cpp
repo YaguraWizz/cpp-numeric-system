@@ -163,7 +163,7 @@ namespace numsystem {
             }();
 
         int sum = 0;
-        for (auto it = store.cbegin(); it != store.cend(); ++it) {
+        for (auto it = store.begin(); it != store.end(); ++it) {
             sum += *it;
         }
         EXPECT_EQ(sum, 6);
