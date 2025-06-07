@@ -172,7 +172,7 @@ int main() {
 | ОС/Компилятор | GCC   | Clang | MSVC  |
 |---------------|-------|-------|-------|
 | Ubuntu        | ✅    | ✅     | N/A   |
-| Windows       | N/A   | N/A   | ❌     |
+| Windows       | N/A   | N/A   | ✅     |
 
 
 > Таблица демонстрирует успешное прохождение тестов на целевых конфигурациях, подтверждая стабильность работы под поддерживаемыми компиляторами и ОС.
@@ -181,8 +181,9 @@ int main() {
 
 | OS/Compiler | Ядер CPU | Частота CPU (МГц) | L1D | L1I | L2U | L3U |
 |---|---|---|---|---|---|---|
-| ubuntu-latest-gcc | 4 | 3168 | 32KB(2sh) | 32KB(2sh) | 512KB(2sh) | 32768KB(4sh) |
-| ubuntu-latest-clang | 4 | 3244 | 32KB(2sh) | 32KB(2sh) | 512KB(2sh) | 32768KB(4sh) |
+| ubuntu-latest-gcc | 4 | 3251 | 32KB(2sh) | 32KB(2sh) | 512KB(2sh) | 32768KB(4sh) |
+| ubuntu-latest-clang | 4 | 3247 | 32KB(2sh) | 32KB(2sh) | 512KB(2sh) | 32768KB(4sh) |
+| windows-latest-msvc | 4 | 2445 | 32KB(2sh) | 32KB(2sh) | 512KB(2sh) | 32768KB(4sh) |
 
 > Системные характеристики, использованные для CI-бенчмарков.
 
@@ -190,18 +191,18 @@ int main() {
 
 | Операция        | Ubuntu (GCC)      , ms | Ubuntu (Clang)    , ms | Windows (MSVC)    , ms |
 |-----------------|------------------------|------------------------|------------------------|
-| Binary-Add      | 0.01                    | **0.01**                | N/A                     |
-| Binary-Comparison | **0.00**                | 0.00                    | N/A                     |
-| Binary-Div      | **4.75**                | 4.78                    | N/A                     |
-| Binary-Mod      | **5.96**                | 7.47                    | N/A                     |
-| Binary-Mul      | 12.33                   | **11.31**               | N/A                     |
-| Binary-Sub      | 0.02                    | **0.01**                | N/A                     |
-| Factorial-Add   | 0.04                    | **0.03**                | N/A                     |
-| Factorial-Comparison | 0.00                    | **0.00**                | N/A                     |
-| Factorial-Div   | **3.41**                | 3.70                    | N/A                     |
-| Factorial-Mod   | **3.90**                | 5.29                    | N/A                     |
-| Factorial-Mul   | **4.27**                | 4.59                    | N/A                     |
-| Factorial-Sub   | 0.04                    | **0.04**                | N/A                     |
+| Binary-Add      | 0.01                    | 0.01                    | **0.00**                |
+| Binary-Comparison | 0.00                    | 0.00                    | **0.00**                |
+| Binary-Div      | 4.91                    | 4.68                    | **0.26**                |
+| Binary-Mod      | 5.62                    | 5.84                    | **0.26**                |
+| Binary-Mul      | 11.85                   | 11.11                   | **0.59**                |
+| Binary-Sub      | 0.02                    | 0.01                    | **0.00**                |
+| Factorial-Add   | 0.04                    | 0.04                    | **0.00**                |
+| Factorial-Comparison | 0.00                    | 0.00                    | **0.00**                |
+| Factorial-Div   | 3.38                    | 4.15                    | **1.00**                |
+| Factorial-Mod   | 5.11                    | 4.81                    | **1.40**                |
+| Factorial-Mul   | 4.27                    | 5.16                    | **1.52**                |
+| Factorial-Sub   | 0.04                    | 0.04                    | **0.00**                |
 
 
 > Значения времени операций в наносекундах. Учитывается реальное время ожидания.
