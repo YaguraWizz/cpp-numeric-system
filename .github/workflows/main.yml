@@ -104,6 +104,11 @@ jobs:
           fi
         shell: bash
 
+      - name: Upload Test Report
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          junit_files: '${{ github.workspace }}/.project/rtest-junit.xml'
+
       - name: Upload test results and benchmark charts artifacts
         continue-on-error: true
         uses: actions/upload-artifact@v4

@@ -1,5 +1,5 @@
 def generate_benchmark_table(results: dict) -> str:
-    """Генерирует Markdown таблицу с результатами бенчмарков, выделяя лучшее время."""
+    """Генерирует Markdown таблицу с результатами бенчмарков в миллисекундах, выделяя лучшее время."""
 
     all_benchmark_names = set()
     for data in results.values():
@@ -13,6 +13,7 @@ def generate_benchmark_table(results: dict) -> str:
 
     sorted_benchmark_names = sorted(all_benchmark_names)
 
+    # Заголовок с указанием измерения в миллисекундах (ms)
     header = "| Операция        "
     separator = "|-----------------"
     
@@ -32,8 +33,8 @@ def generate_benchmark_table(results: dict) -> str:
     }
 
     for platform_key in platform_order:
-        header += f"| {display_names.get(platform_key, platform_key):<18} "
-        separator += f"|{'-'*18}-"
+        header += f"| {display_names.get(platform_key, platform_key):<18}, ms "
+        separator += f"|{'-'*23}-"
         platform_cols.append(platform_key)
 
     header += "|\n"
@@ -44,7 +45,7 @@ def generate_benchmark_table(results: dict) -> str:
         row = f"| {bm_name_prefix:<15} "
         times_list = []
 
-        # Считаем среднее время для каждой платформы
+        # Считаем среднее время для каждой платформы, конвертируем из нс в мс
         for platform_key in platform_cols:
             platform_data = results.get(platform_key, {}).get("benchmark_results", [])
             times = [
@@ -52,8 +53,9 @@ def generate_benchmark_table(results: dict) -> str:
                 for bm in platform_data
                 if bm.get("run_type") != "aggregate" and bm["name"].startswith(bm_name_prefix)
             ]
-            avg_time = sum(times) / len(times) if times else None
-            times_list.append(avg_time)
+            avg_time_ns = sum(times) / len(times) if times else None
+            avg_time_ms = avg_time_ns / 1_000_000 if avg_time_ns is not None else None
+            times_list.append(avg_time_ms)
 
         # Находим минимальное время среди платформ (если есть)
         filtered_times = [t for t in times_list if t is not None]
@@ -64,13 +66,11 @@ def generate_benchmark_table(results: dict) -> str:
             if t is None:
                 cell = "N/A"
             elif min_time is not None and abs(t - min_time) < 1e-6:
-                # Выделяем минимальное время жирным
-                cell = f"**{t:.2f} нс**"
+                cell = f"**{t:.2f}**"
             else:
-                cell = f"{t:.2f} нс"
-            row += f"| {cell:<18} "
+                cell = f"{t:.2f}"
+            row += f"| {cell:<23} "
         row += "|\n"
         table_rows.append(row)
 
     return header + separator + "".join(table_rows)
-
