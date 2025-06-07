@@ -35,6 +35,9 @@ def main():
         print(f"[ERROR] Каталог артефактов '{input_base_path}' не найден.")
         return
 
+    if template_path.is_dir():
+        template_path = template_path / "README.md.template"
+
     print("[INFO] Начинаю сбор данных из каталогов артефактов... ", end="", flush=True)
     all_results = {}
 
@@ -48,8 +51,8 @@ def main():
         print(f"\n  Обрабатываю конфигурацию: {combo_dir_name} ... ", end="", flush=True)
         combo_path = input_base_path / combo_dir_name
 
-        test_xml_path = combo_path / "rtest-junit.xml"
-        benchmark_json_path = combo_path / "rbenchmark.json"
+        test_xml_path = combo_path / ".project" / "rtest-junit.xml"
+        benchmark_json_path = combo_path / ".project" / "rbenchmark.json"
 
         test_results = {"total": 0, "failures": 0, "errors": 0, "skipped": 0, "passed": False}
         benchmark_data = {"benchmarks": [], "system_info": {}}
