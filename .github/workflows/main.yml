@@ -183,7 +183,11 @@ jobs:
       - name: Generate benchmark charts
         run: |
           cd tools/impl
-          python plot-benchmarks.py --input ../../.project/rbenchmark.json --output ../../docs/charts || true
+          try {
+            python plot-benchmarks.py --input ../../.project/rbenchmark.json --output ../../docs/charts
+          } catch {
+            Write-Host "Chart generation failed, but continuing"
+          }
         shell: powershell
 
       - name: Upload artifacts
