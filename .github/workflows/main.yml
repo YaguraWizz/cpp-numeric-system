@@ -48,19 +48,19 @@ jobs:
 
       - name: Setup compiler (Ubuntu + GCC)
         if: matrix.os == 'ubuntu-latest' && matrix.compiler == 'gcc'
-        run: 
-          sudo apt-get update
-          sudo apt-get install -y gcc
+        run: |
+            sudo apt-get update
+            sudo apt-get install -y gcc
 
       - name: Setup compiler (Ubuntu + Clang)
         if: matrix.os == 'ubuntu-latest' && matrix.compiler == 'clang'
-        run: 
+        run: |
           sudo apt-get update
           sudo apt-get install -y clang
 
       - name: Setup compiler (Windows + MSVC)
         if: matrix.os == 'windows-latest' && matrix.compiler == 'msvc'
-        uses: microsoft/setup-msbuild@v1
+        uses: microsoft/setup-msbuild@v2
 
       - name: Configure CMake
         run: |
