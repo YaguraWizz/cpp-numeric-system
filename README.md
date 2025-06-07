@@ -105,7 +105,55 @@ tools/run-tests.bat    # или run-tests.sh
 
 ## 📈 Примеры
 
-{{EXAMPLE1}}
+
+```cpp
+#include "BinaryArithmetic.h"
+#include "FactorialArithmetic.h"
+#include <string>
+#include <iostream>
+
+int main() {
+
+        using namespace numsystem;
+        std::string largeNumStr1 = "123456789012345678901234567890";
+        std::string largeNumStr2 = "98765432109876543210987654321";
+
+        BinaryArithmetic binA(largeNumStr1);
+        BinaryArithmetic binB(largeNumStr2);
+        BinaryArithmetic binSum = binA + binB;
+        std::cout << "Binary Sum:      " << to_string(binSum;);
+
+        FactorialArithmetic factA(largeNumStr1);
+        FactorialArithmetic factB(largeNumStr2);
+        FactorialArithmetic factSum = factA + factB;
+        std::cout << "Factorial Sum:   " << to_string(factSum;);
+
+        bool expect = to_string(binSum) == to_string(factSum);
+
+        if (expect) {
+            std::cout << "Results match for addition!";
+        } else {
+           std::cout << "Results DO NOT match for addition!";
+        }
+
+        std::string numToMultiply = "5";
+        BinaryArithmetic binProduct = binA * BinaryArithmetic(numToMultiply);
+        FactorialArithmetic factProduct = factA * FactorialArithmetic(numToMultiply);
+
+        expect = to_string(binProduct) == to_string(factProduct);
+
+        std::cout << "Binary Product:  " << to_string(binProduct;);
+        std::cout << "Factorial Prod.: " << to_string(factProduct;);
+        if (expect) {
+            std::cout << "Results match for multiplication!";
+        } else {
+            std::cout << "Results DO NOT match for multiplication!";
+        }
+
+    return 0;
+}
+```
+
 
 ---
 
@@ -121,19 +169,41 @@ tools/run-tests.bat    # или run-tests.sh
 
 ### ✅ Поддержка платформ и компиляторов
 
-{{COMPATIBILITY_TABLE}}
+| ОС/Компилятор | GCC   | Clang | MSVC  |
+|---------------|-------|-------|-------|
+| Ubuntu        | ✅    | ✅     | N/A   |
+| Windows       | N/A   | N/A   | ✅     |
+
 
 > Таблица демонстрирует успешное прохождение тестов на целевых конфигурациях, подтверждая стабильность работы под поддерживаемыми компиляторами и ОС.
 
 ### ⚙️ Конфигурация системы CI
 
-{{SYSTEM_INFO}}
+| OS/Compiler | Ядер CPU | Частота CPU (МГц) | L1D | L1I | L2U | L3U |
+|---|---|---|---|---|---|---|
+| ubuntu-latest-gcc | 4 | 3257 | 32KB(2sh) | 32KB(2sh) | 512KB(2sh) | 32768KB(4sh) |
+| ubuntu-latest-clang | 4 | 3285 | 32KB(2sh) | 32KB(2sh) | 512KB(2sh) | 32768KB(4sh) |
+| windows-latest-msvc | 4 | 2445 | 32KB(2sh) | 32KB(2sh) | 512KB(2sh) | 32768KB(4sh) |
 
 > Системные характеристики, использованные для CI-бенчмарков.
 
 ### 📊 Результаты производительности
 
-{{BENCHMARK_TABLE}}
+| Операция        | Ubuntu (GCC)       | Ubuntu (Clang)     | Windows (MSVC)     |
+|-----------------|-------------------|-------------------|-------------------|
+| Binary-Add      | 13535.61 нс        | 13636.75 нс        | **539.69 нс**      |
+| Binary-Comparison | 434.67 нс          | 455.93 нс          | **19.32 нс**       |
+| Binary-Div      | 4605572.40 нс      | 4844459.83 нс      | **262133.47 нс**   |
+| Binary-Mod      | 7532847.36 нс      | 7606268.91 нс      | **414048.99 нс**   |
+| Binary-Mul      | 12111914.09 нс     | 11862523.62 нс     | **602847.64 нс**   |
+| Binary-Sub      | 15770.54 нс        | 15787.78 нс        | **880.40 нс**      |
+| Factorial-Add   | 39433.84 нс        | 39657.02 нс        | **3938.98 нс**     |
+| Factorial-Comparison | 1997.50 нс         | 1670.28 нс         | **170.49 нс**      |
+| Factorial-Div   | 3403393.43 нс      | 3388927.19 нс      | **976273.77 нс**   |
+| Factorial-Mod   | 5317064.44 нс      | 5122476.58 нс      | **1747667.46 нс**  |
+| Factorial-Mul   | 4282199.65 нс      | 4265068.10 нс      | **1509638.81 нс**  |
+| Factorial-Sub   | 42772.55 нс        | 43107.97 нс        | **4615.18 нс**     |
+
 
 > Значения времени операций в наносекундах. Учитывается реальное время ожидания.
 
